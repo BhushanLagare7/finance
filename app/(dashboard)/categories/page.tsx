@@ -6,18 +6,18 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete-accounts";
-import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
-import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
+import { useBulkDeleteCategories } from "@/features/categories/api/use-bulk-delete-categories";
+import { useGetCategories } from "@/features/categories/api/use-get-categories";
+import { useNewCategory } from "@/features/categories/hooks/use-new-category";
 
 import { columns } from "./columns";
 
-const AccountsPage = () => {
-  const newAccount = useNewAccount();
-  const bulkDeleteAccounts = useBulkDeleteAccounts();
-  const { data: accounts = [], isLoading } = useGetAccounts();
+const CategoriesPage = () => {
+  const newCategory = useNewCategory();
+  const bulkDeleteCategories = useBulkDeleteCategories();
+  const { data: categories = [], isLoading } = useGetCategories();
 
-  const isDisabled = bulkDeleteAccounts.isPending || isLoading;
+  const isDisabled = bulkDeleteCategories.isPending || isLoading;
 
   if (isLoading) {
     return (
@@ -41,8 +41,8 @@ const AccountsPage = () => {
     <div className="pb-10 mx-auto -mt-24 w-full max-w-screen-2xl">
       <Card className="border-none drop-shadow-sm">
         <CardHeader className="gap-y-2 lg:flex lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle className="text-xl line-clamp-1">Accounts</CardTitle>
-          <Button size="sm" onClick={newAccount.onOpen}>
+          <CardTitle className="text-xl line-clamp-1">Categories</CardTitle>
+          <Button size="sm" onClick={newCategory.onOpen}>
             <PlusIcon className="mr-2 size-4" />
             Add New
           </Button>
@@ -50,12 +50,12 @@ const AccountsPage = () => {
         <CardContent>
           <DataTable
             columns={columns}
-            data={accounts}
+            data={categories}
             disabled={isDisabled}
             filterKey="name"
             onDelete={(row) => {
               const ids = row.map((r) => r.original.id);
-              bulkDeleteAccounts.mutate({ ids });
+              bulkDeleteCategories.mutate({ ids });
             }}
           />
         </CardContent>
@@ -64,4 +64,4 @@ const AccountsPage = () => {
   );
 };
 
-export default AccountsPage;
+export default CategoriesPage;

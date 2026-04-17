@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/hono";
 
+import { Actions } from "./actions";
+
 export type AccountResponseType = InferResponseType<
   typeof client.api.accounts.$get,
   200
@@ -49,5 +51,9 @@ export const columns: ColumnDef<AccountResponseType>[] = [
         </Button>
       );
     },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => <Actions id={row.original.id} />,
   },
 ];

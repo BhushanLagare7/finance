@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -42,6 +43,11 @@ export function DataTable<TData, TValue>({
   onDelete,
   disabled,
 }: DataTableProps<TData, TValue>) {
+  const [ConfirmDialog, confirm] = useConfirm(
+    "Are you sure?",
+    "You are about to perform a bulk delete. This action cannot be undone.",
+  );
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
@@ -65,6 +71,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
+      <ConfirmDialog />
       <div className="flex items-center py-4">
         <Input
           className="max-w-sm"
@@ -80,6 +87,14 @@ export function DataTable<TData, TValue>({
             disabled={disabled}
             size="sm"
             variant="outline"
+            onClick={async () => {
+              const selectedRows = table.getFilteredSelectedRowModel().rows;
+              const ok = await confirm();
+              if (!ok) return;
+
+              onDelete(selectedRows);
+              table.resetRowSelection();
+            }}
           >
             <TrashIcon className="mr-2 size-4" />
             Delete ({table.getFilteredSelectedRowModel().rows.length})

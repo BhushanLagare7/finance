@@ -15,6 +15,13 @@
       "when": 1776337789396,
       "tag": "0001_open_wendell_vaughn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776433200484,
+      "tag": "0002_public_phalanx",
+      "breakpoints": true
     }
   ]
 }

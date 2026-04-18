@@ -16,6 +16,7 @@ export const AccountColumn = ({ account, accountId }: AccountColumnProps) => {
     <div
       className="flex items-center cursor-pointer hover:underline"
       role="button"
+      tabIndex={0}
       onClick={onClick}
     >
       {account}

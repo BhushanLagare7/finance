@@ -33,6 +33,7 @@ export const CategoryColumn = ({
         !category && "text-red-500",
       )}
       role="button"
+      tabIndex={0}
       onClick={onClick}
     >
       {!category && <TriangleAlertIcon className="mr-2 size-4 shrink-0" />}

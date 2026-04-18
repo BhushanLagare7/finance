@@ -13,10 +13,16 @@ export function convertAmountFromMilliunits(amount: number) {
   return amount / 1000;
 }
 
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("en-US", {
+export const formatCurrency = (
+  amount: number,
+  {
+    locale = "en-US",
+    currency = "USD",
+  }: { locale?: string; currency?: string } = {},
+) => {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency,
     minimumFractionDigits: 2,
   }).format(amount);
 };

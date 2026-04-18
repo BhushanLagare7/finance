@@ -6,18 +6,18 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete-accounts";
-import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
-import { useNewAccount } from "@/features/accounts/hooks/use-new-account";
+import { useBulkDeleteTransactions } from "@/features/transactions/api/use-bulk-delete-transactions";
+import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
+import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
 
 import { columns } from "./columns";
 
-const AccountsPage = () => {
-  const newAccount = useNewAccount();
-  const bulkDeleteAccounts = useBulkDeleteAccounts();
-  const { data: accounts = [], isLoading } = useGetAccounts();
+const TransactionsPage = () => {
+  const newTransaction = useNewTransaction();
+  const bulkDeleteTransactions = useBulkDeleteTransactions();
+  const { data: transactions = [], isLoading } = useGetTransactions();
 
-  const isDisabled = bulkDeleteAccounts.isPending || isLoading;
+  const isDisabled = bulkDeleteTransactions.isPending || isLoading;
 
   if (isLoading) {
     return (
@@ -41,8 +41,10 @@ const AccountsPage = () => {
     <div className="pb-10 mx-auto -mt-24 w-full max-w-screen-2xl">
       <Card className="border-none drop-shadow-sm">
         <CardHeader className="gap-y-2 lg:flex lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle className="text-xl line-clamp-1">Accounts</CardTitle>
-          <Button size="sm" onClick={newAccount.onOpen}>
+          <CardTitle className="text-xl line-clamp-1">
+            Transactions History
+          </CardTitle>
+          <Button size="sm" onClick={newTransaction.onOpen}>
             <PlusIcon className="mr-2 size-4" />
             Add New
           </Button>
@@ -50,12 +52,12 @@ const AccountsPage = () => {
         <CardContent>
           <DataTable
             columns={columns}
-            data={accounts}
+            data={transactions}
             disabled={isDisabled}
-            filterKey="name"
+            filterKey="payee"
             onDelete={(row) => {
               const ids = row.map((r) => r.original.id);
-              bulkDeleteAccounts.mutate({ ids });
+              bulkDeleteTransactions.mutate({ ids });
             }}
           />
         </CardContent>
@@ -64,4 +66,4 @@ const AccountsPage = () => {
   );
 };
 
-export default AccountsPage;
+export default TransactionsPage;

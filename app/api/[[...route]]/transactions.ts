@@ -273,6 +273,79 @@ const app = new Hono()
     },
   )
   /**
+   * POST /bulk-create
+   *
+   * Creates multiple transactions for the authenticated user.
+   *
+   * @route POST /bulk-create
+   * @auth Required - Clerk authentication
+   *
+   * @bodyparam {Date[]} date - Transaction date
+   * @bodyparam {string[]} accountId - Account ID (must belong to authenticated user)
+   * @bodyparam {string[]} [categoryId] - Category ID (optional)
+   * @bodyparam {string[]} payee - Payee name
+   * @bodyparam {number[]} amount - Transaction amount (negative for expenses, positive for income)
+   * @bodyparam {string[]} [notes] - Additional notes (optional)
+   *
+   * @returns {Object} 200 - Success response with created transactions
+   * @returns {Object[]} data - Array of created transaction objects
+   * @returns {Object} 401 - Unauthorized if user is not authenticated
+   *
+   * @example
+   * // POST  /bulk-create
+   * // Request body:
+   * [
+   *  {
+   *    "date": "2024-01-15T00:00:00.000Z",
+   *    "accountId": "acc_123",
+   *    "categoryId": "cat_456",
+   *    "payee": "Restaurant",
+   *    "amount": -2500,
+   *    "notes": "Lunch meeting"
+   *  }
+   * ]
+   *
+   * // Response:
+   * {
+   *   "data": [
+   *     {
+   *      "id": "txn_newid123",
+   *      "date": "2024-01-15T00:00:00.000Z",
+   *      "accountId": "acc_123",
+   *      "categoryId": "cat_456",
+   *      "payee": "Restaurant",
+   *      "amount": -2500,
+   *      "notes": "Lunch meeting"
+   *     }
+   *  ]
+   * }
+   */
+  .post(
+    "/bulk-create",
+    clerkMiddleware(),
+    zValidator("json", z.array(insertTransactionSchema.omit({ id: true }))),
+    async (c) => {
+      const auth = getAuth(c);
+      if (!auth?.userId) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const values = c.req.valid("json");
+
+      const data = await db
+        .insert(transactions)
+        .values(
+          values.map((value) => ({
+            id: createId(),
+            ...value,
+          })),
+        )
+        .returning();
+
+      return c.json({ data });
+    },
+  )
+  /**
    * POST /bulk-delete
    *
    * Deletes multiple transactions by ID for the authenticated user.

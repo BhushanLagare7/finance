@@ -3,11 +3,15 @@
 import { useState } from "react";
 
 import { LoaderIcon, PlusIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { transactions as transactionSchema } from "@/db/schema";
+import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
+import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
 import { useBulkDeleteTransactions } from "@/features/transactions/api/use-bulk-delete-transactions";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
 import { useNewTransaction } from "@/features/transactions/hooks/use-new-transaction";
@@ -33,7 +37,9 @@ const TransactionsPage = () => {
     typeof INITIAL_IMPORT_RESULTS
   >(INITIAL_IMPORT_RESULTS);
 
+  const [AccountDialog, confirmAccount] = useSelectAccount();
   const newTransaction = useNewTransaction();
+  const bulkCreateTransactions = useBulkCreateTransactions();
   const bulkDeleteTransactions = useBulkDeleteTransactions();
   const { data: transactions = [], isLoading } = useGetTransactions();
 
@@ -45,6 +51,28 @@ const TransactionsPage = () => {
   const onCancelImport = () => {
     setImportResults(INITIAL_IMPORT_RESULTS);
     setVariant(VARIANTS.LIST);
+  };
+
+  const onSubmitImport = async (
+    values: (typeof transactionSchema.$inferInsert)[],
+  ) => {
+    const accountId = await confirmAccount();
+    if (!accountId) return toast.error("Please select an account to continue.");
+
+    const transactionsWithAccount = values.map((transaction) => ({
+      ...transaction,
+      accountId: accountId as string,
+    }));
+
+    bulkCreateTransactions.mutate(transactionsWithAccount, {
+      onSuccess: () => {
+        onCancelImport();
+        toast.success("Transactions imported successfully.");
+      },
+      onError: () => {
+        toast.error("Failed to import transactions.");
+      },
+    });
   };
 
   const isDisabled = bulkDeleteTransactions.isPending || isLoading;
@@ -70,10 +98,11 @@ const TransactionsPage = () => {
   if (variant === VARIANTS.IMPORT) {
     return (
       <>
+        <AccountDialog />
         <ImportCard
           data={importResults.data}
           onCancel={onCancelImport}
-          onSubmit={() => {}}
+          onSubmit={onSubmitImport}
         />
       </>
     );

@@ -264,7 +264,7 @@ const app = new Hono().get(
       .innerJoin(categories, eq(transactions.categoryId, categories.id))
       .where(
         and(
-          accounts.id ? eq(transactions.accountId, accounts.id) : undefined,
+          accountId ? eq(transactions.accountId, accountId) : undefined,
           /** Ensure transactions belong to the authenticated user */
           eq(accounts.userId, auth.userId),
           /** Only include expense transactions (negative amounts) */
@@ -274,7 +274,7 @@ const app = new Hono().get(
         ),
       )
       .groupBy(categories.name)
-      .orderBy(sql`SUM(ABS(${transactions.amount}))`);
+      .orderBy(sql`SUM(ABS(${transactions.amount})) DESC`);
 
     /**
      * Process category data to show top 3 categories and group the rest as "Other".
@@ -329,7 +329,7 @@ const app = new Hono().get(
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(
         and(
-          accounts.id ? eq(transactions.accountId, accounts.id) : undefined,
+          accountId ? eq(transactions.accountId, accountId) : undefined,
           eq(accounts.userId, auth.userId),
           gte(transactions.date, startDate),
           lte(transactions.date, endDate),

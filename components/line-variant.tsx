@@ -36,7 +36,7 @@ export const LineVariant = ({ data }: Props) => {
           className="drop-shadow-sm"
           dataKey="income"
           dot={false}
-          stroke="#3B82F6"
+          stroke="#3D82F6"
           strokeWidth={2}
         />
         <Line

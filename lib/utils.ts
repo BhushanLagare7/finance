@@ -4,7 +4,7 @@
  */
 
 import { type ClassValue, clsx } from "clsx";
-import { eachDayOfInterval, isSameDay } from "date-fns";
+import { eachDayOfInterval, format, isSameDay, subDays } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -191,3 +191,98 @@ export const fillMissingDays = (
 
   return transactionsByDay;
 };
+
+/**
+ * Represents a date range with optional start and end dates.
+ *
+ * Used primarily for filtering or displaying data within a specific
+ * time interval.
+ *
+ * @property {string | Date | undefined} from - The start date of the period.
+ * @property {string | Date | undefined} to - The end date of the period.
+ */
+type Period = {
+  from: string | Date | undefined;
+  to: string | Date | undefined;
+};
+
+/**
+ * Formats a date range into a human-readable string.
+ *
+ * If no start date is provided, it defaults to reaching back 30 days
+ * from the current date. Returns a range string (e.g., "Jan 01 - Jan 31, 2024")
+ * or a single date string if no end date is provided.
+ *
+ * @param {Period} [period] - The date range to format.
+ * @returns {string} A formatted string representing the date range.
+ *
+ * @example
+ * formatDateRange({ from: new Date("2024-01-01"), to: new Date("2024-01-31") });
+ * // => "Jan 01 - Jan 31, 2024"
+ *
+ * @example
+ * formatDateRange({ from: new Date("2024-01-01") });
+ * // => "Jan 01, 2024"
+ *
+ * @example
+ * // Default range (last 30 days)
+ * formatDateRange();
+ * // => "Mar 22 - Apr 21, 2024" (depending on current date)
+ */
+export const formatDateRange = (period?: Period) => {
+  const defaultTo = new Date();
+  const defaultFrom = subDays(defaultTo, 30);
+
+  if (!period?.from) {
+    return `${format(defaultFrom, "LLL dd")} - ${format(defaultTo, "LLL dd, y")}`;
+  }
+
+  if (period.to) {
+    return `${format(period.from, "LLL dd")} - ${format(period.to, "LLL dd, y")}`;
+  }
+
+  return format(period.from, "LLL dd, y");
+};
+
+/**
+ * Formats a percentage value with optional prefix.
+ *
+ * Uses the `Intl.NumberFormat` API to produce locale-aware percentage
+ * formatting.
+ *
+ * @param {number} value - The percentage value to format.
+ * @param {Object} [options={}] - Optional formatting configuration.
+ * @param {boolean} [options.addPrefix=false] - Whether to add a plus sign
+ * for positive values.
+ * @returns {string} The formatted percentage string.
+ *
+ * @example
+ * formatPercentage(10);
+ * // => "10%"
+ *
+ * @example
+ * // With positive prefix
+ * formatPercentage(12.5, { addPrefix: true });
+ * // => "+13%"
+ *
+ * @example
+ * // Negative percentage
+ * formatPercentage(-5.75);
+ * // => "-6%"
+ */
+export function formatPercentage(
+  value: number,
+  options: { addPrefix?: boolean } = {
+    addPrefix: false,
+  },
+) {
+  const result = new Intl.NumberFormat("en-US", {
+    style: "percent",
+  }).format(value / 100);
+
+  if (options.addPrefix && value > 0) {
+    return `+${result}`;
+  }
+
+  return result;
+}

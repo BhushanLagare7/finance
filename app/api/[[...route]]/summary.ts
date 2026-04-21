@@ -84,8 +84,8 @@ import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
  *     "remainingChange": 12.5,
  *     "incomeAmount": 3000.00,
  *     "incomeChange": 5.2,
- *     "expensesAmount": -1500.00,
- *     "expensesChange": -3.1,
+ *     "expensesAmount": 1500.00,
+ *     "expensesChange": 3.1,
  *     "categories": [
  *       { "name": "Food", "value": 500.00 },
  *       { "name": "Transport", "value": 300.00 },
@@ -93,7 +93,7 @@ import { calculatePercentageChange, fillMissingDays } from "@/lib/utils";
  *       { "name": "Other", "value": 500.00 }
  *     ],
  *     "days": [
- *       { "date": "2024-01-01", "income": 1000.00, "expenses": -200.00 },
+ *       { "date": "2024-01-01", "income": 1000.00, "expenses": 200.00 },
  *       ...
  *     ]
  *   }
@@ -319,9 +319,9 @@ const app = new Hono().get(
           sql`SUM(CASE WHEN ${transactions.amount} >= 0 THEN ${transactions.amount} ELSE 0 END)`.mapWith(
             Number,
           ),
-        /** Total expenses for this day (sum of negative transactions) */
+        /** Total absolute expenses for this day (positive value) */
         expenses:
-          sql`SUM(CASE WHEN ${transactions.amount} < 0 THEN ${transactions.amount} ELSE 0 END)`.mapWith(
+          sql`SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END)`.mapWith(
             Number,
           ),
       })

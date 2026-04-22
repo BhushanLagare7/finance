@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { LoaderIcon, PlusIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ const INITIAL_IMPORT_RESULTS = {
   meta: {},
 };
 
-const TransactionsPage = () => {
+const TransactionsPageContent = () => {
   const [variant, setVariant] = useState<VARIANTS>(VARIANTS.LIST);
   const [importResults, setImportResults] = useState<
     typeof INITIAL_IMPORT_RESULTS
@@ -141,6 +141,14 @@ const TransactionsPage = () => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+const TransactionsPage = () => {
+  return (
+    <Suspense fallback={null}>
+      <TransactionsPageContent />
+    </Suspense>
   );
 };
 

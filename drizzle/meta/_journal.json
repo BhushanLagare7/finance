@@ -29,6 +29,13 @@
       "when": 1776437508315,
       "tag": "0003_violet_trauma",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776882789101,
+      "tag": "0004_late_galactus",
+      "breakpoints": true
     }
   ]
 }

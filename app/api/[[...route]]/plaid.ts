@@ -1,3 +1,4 @@
+import { and, eq, isNotNull } from "drizzle-orm";
 import { Hono } from "hono";
 import {
   Configuration,
@@ -12,23 +13,20 @@ import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 
 import { db } from "@/db/drizzle";
-import { connectedBanks } from "@/db/schema";
-
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_TOKEN;
-const PLAID_SECRET = process.env.PLAID_SECRET_TOKEN;
-
-if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
-  throw new Error(
-    "Missing PLAID_CLIENT_ID or PLAID_SECRET environment variables",
-  );
-}
+import {
+  accounts,
+  categories,
+  connectedBanks,
+  transactions,
+} from "@/db/schema";
+import { convertAmountToMilliunits } from "@/lib/utils";
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments.sandbox,
   baseOptions: {
     headers: {
-      "PLAID-CLIENT-ID": PLAID_CLIENT_ID,
-      "PLAID-SECRET": PLAID_SECRET,
+      "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_TOKEN,
+      "PLAID-SECRET": process.env.PLAID_SECRET_TOKEN,
     },
   },
 });
@@ -36,6 +34,52 @@ const configuration = new Configuration({
 const client = new PlaidApi(configuration);
 
 const app = new Hono()
+  .get("/connected-bank", clerkMiddleware(), async (c) => {
+    const auth = getAuth(c);
+
+    if (!auth?.userId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const [connectedBank] = await db
+      .select()
+      .from(connectedBanks)
+      .where(eq(connectedBanks.userId, auth.userId));
+
+    return c.json({ data: connectedBank || null });
+  })
+  .delete("/connected-bank", clerkMiddleware(), async (c) => {
+    const auth = getAuth(c);
+
+    if (!auth?.userId) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const [connectedBank] = await db
+      .delete(connectedBanks)
+      .where(eq(connectedBanks.userId, auth.userId))
+      .returning({
+        id: connectedBanks.id,
+      });
+
+    if (!connectedBank) {
+      return c.json({ error: "Not found" }, 404);
+    }
+
+    await db
+      .delete(accounts)
+      .where(
+        and(eq(accounts.userId, auth.userId), isNotNull(accounts.plaidId)),
+      );
+
+    await db
+      .delete(categories)
+      .where(
+        and(eq(categories.userId, auth.userId), isNotNull(categories.plaidId)),
+      );
+
+    return c.json({ data: connectedBank });
+  })
   .post("/create-link-token", clerkMiddleware(), async (c) => {
     const auth = getAuth(c);
 
@@ -53,12 +97,17 @@ const app = new Hono()
       country_codes: [CountryCode.Us],
     });
 
-    return c.json({ data: token.data.link_token });
+    return c.json({ data: token.data.link_token }, 200);
   })
   .post(
     "/exchange-public-token",
     clerkMiddleware(),
-    zValidator("json", z.object({ publicToken: z.string() })),
+    zValidator(
+      "json",
+      z.object({
+        publicToken: z.string(),
+      }),
+    ),
     async (c) => {
       const auth = getAuth(c);
       const { publicToken } = c.req.valid("json");
@@ -80,7 +129,74 @@ const app = new Hono()
         })
         .returning();
 
-      return c.json({ data: connectedBank });
+      const plaidTransactions = await client.transactionsSync({
+        access_token: connectedBank.accessToken,
+      });
+
+      const plaidAccounts = await client.accountsGet({
+        access_token: connectedBank.accessToken,
+      });
+
+      const plaidCategories = await client.categoriesGet({});
+
+      const newAccounts = await db
+        .insert(accounts)
+        .values(
+          plaidAccounts.data.accounts.map((account) => ({
+            id: createId(),
+            name: account.name,
+            plaidId: account.account_id,
+            userId: auth.userId,
+          })),
+        )
+        .returning();
+
+      const newCategories = await db
+        .insert(categories)
+        .values(
+          plaidCategories.data.categories.map((category) => ({
+            id: createId(),
+            name: category.hierarchy.join(", "),
+            plaidId: category.category_id,
+            userId: auth.userId,
+          })),
+        )
+        .returning();
+
+      const newTransactionsValues = plaidTransactions.data.added.reduce(
+        (acc, transaction) => {
+          const account = newAccounts.find(
+            (account) => account.plaidId === transaction.account_id,
+          );
+          const category = newCategories.find(
+            (category) => category.plaidId === transaction.category_id,
+          );
+          const amountInMilliunits = convertAmountToMilliunits(
+            transaction.amount,
+          );
+
+          if (account) {
+            acc.push({
+              id: createId(),
+              amount: amountInMilliunits,
+              payee: transaction.merchant_name || transaction.name,
+              notes: transaction.name,
+              date: new Date(transaction.date),
+              accountId: account.id,
+              categoryId: category?.id,
+            });
+          }
+
+          return acc;
+        },
+        [] as (typeof transactions.$inferInsert)[],
+      );
+
+      if (newTransactionsValues.length > 0) {
+        await db.insert(transactions).values(newTransactionsValues);
+      }
+
+      return c.json({ ok: true }, 200);
     },
   );
 

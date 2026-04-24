@@ -73,7 +73,7 @@ export const SpendingPie = ({ data = [] }: Props) => {
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
-          <div className="flex flex-col gap-y-4 items-center justify-center h-[350px] w-full">
+          <div className="flex flex-col gap-y-4 items-center justify-center h-87.5 w-full">
             <FileSearchIcon className="size-6 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               No data for this period
@@ -96,10 +96,10 @@ export const SpendingPieLoading = () => {
     <Card className="border-none drop-shadow-sm">
       <CardHeader className="flex justify-between space-y-2 lg:space-y-0 lg:flex-row lg:items-center">
         <Skeleton className="w-48 h-8" />
-        <Skeleton className="h-8 lg:w-[120px] w-full" />
+        <Skeleton className="w-full h-8 lg:w-30" />
       </CardHeader>
       <CardContent>
-        <div className="h-[350px] w-full flex items-center justify-center">
+        <div className="h-87.5 w-full flex items-center justify-center">
           <LoaderIcon className="w-6 h-6 animate-spin text-slate-300" />
         </div>
       </CardContent>

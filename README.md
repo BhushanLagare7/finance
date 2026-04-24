@@ -106,4 +106,4 @@ If you encounter any issues, have questions, or want to report a bug:
 
 We welcome contributions from the community! Whether it's fixing a bug, improving documentation, or adding a new feature, your help is appreciated.
 
-Please see our [Contributing Guidelines](docs/CONTRIBUTING.md) for detailed instructions on how to submit pull requests, report bugs, and suggest enhancements.
+Please see our Contributing Guidelines for detailed instructions on how to submit pull requests, report bugs, and suggest enhancements.

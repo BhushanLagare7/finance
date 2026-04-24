@@ -20,9 +20,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Finance",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  ),
+  title: {
+    default: "Finance | Manage Your Wealth",
+    template: "%s | Finance",
+  },
   description:
-    "Track your income and expenses, categorize transactions and assign them to specific accounts",
+    "Track your income and expenses, categorize transactions and assign them to specific accounts with ease.",
+  openGraph: {
+    title: "Finance Dashboard",
+    description:
+      "Track your income and expenses, categorize transactions and assign them to specific accounts.",
+    url: "/",
+    siteName: "Finance",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Finance | Manage Your Wealth",
+    description:
+      "Track your income and expenses, categorize transactions and assign them to specific accounts.",
+  },
 };
 
 export default function RootLayout({
